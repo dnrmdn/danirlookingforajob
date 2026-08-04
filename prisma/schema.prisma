@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  password      String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  applications  Application[]
+  reminders     Reminder[]
+}
+
+model Application {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  position    String
+  company     String
+  location    String?
+  salary      String?
+  description String?
+  url         String?
+  
+  status      ApplicationStatus @default(BOOKMARKED)
+  source      ApplicationSource @default(OTHER)
+  method      ApplicationMethod @default(OTHER)
+  
+  appliedAt   DateTime?
+  interviewAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  notes       Note[]
+  reminders   Reminder[]
+  attachments Attachment[]
+}
+
+model Note {
+  id            String   @id @default(cuid())
+  content       String
+  
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+}
+
+model Reminder {
+  id            String   @id @default(cuid())
+  title         String
+  reminderDate  DateTime
+  completed     Boolean  @default(false)
+  
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+}
+
+model Attachment {
+  id            String   @id @default(cuid())
+  filename      String
+  url           String
+  mimeType      String?
+  size          Int?
+  
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  entityType  String   // e.g., "Application", "Note", "User"
+  entityId    String   // ID of the entity
+  action      String   // e.g., "CREATED", "UPDATED", "STATUS_CHANGED"
+  userId      String   // ID of the user who performed the action
+  metadata    Json?    // Optional JSON payload for details (e.g. { from: 'BOOKMARKED', to: 'APPLIED' })
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([entityType, entityId])
+  @@index([userId])
+}
+
+enum ApplicationStatus {
+  BOOKMARKED
+  APPLYING
+  APPLIED
+  INTERVIEW
+  OFFER
+  REJECTED
+  GHOSTED
+}
+
+enum ApplicationSource {
+  LINKEDIN
+  INDEED
+  GLASSDOOR
+  COMPANY_SITE
+  REFERRAL
+  OTHER
+}
+
+enum ApplicationMethod {
+  EASY_APPLY
+  MANUAL
+  EMAIL
+  REFERRAL
+  OTHER
+}
