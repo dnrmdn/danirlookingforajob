@@ -25,15 +25,27 @@ export const authConfig: NextAuthConfig = {
     },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isOnApp = !nextUrl.pathname.startsWith("/login") && !nextUrl.pathname.startsWith("/register");
 
-      if (isOnApp) {
-        if (isLoggedIn) return true;
-        return false; // Redirect to login
-      } else if (isLoggedIn) {
-        return Response.redirect(new URL("/dashboard", nextUrl));
+      const publicRoutes = [
+        "/",
+        "/login",
+        "/register",
+      ];
+
+      const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
+
+      if (isPublicRoute) {
+        if (
+          isLoggedIn &&
+          (nextUrl.pathname === "/login" || nextUrl.pathname === "/register")
+        ) {
+          return Response.redirect(new URL("/dashboard", nextUrl));
+        }
+
+        return true;
       }
-      return true;
-    },
+
+      return isLoggedIn;
+    }
   },
 };

@@ -1,9 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Plus, Trash2, Send } from 'lucide-react';
-import { useNotes, useCreateNote } from '@/lib/api-client/notes';
-import { useUIStore } from '@/stores/useUIStore';
+import {
+  FileText,
+  Plus,
+  Trash2,
+  Send,
+  MoreHorizontal,
+  Pencil,
+} from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useNotes, useCreateNote, useDeleteNote, useUpdateNote } from '@/lib/api-client/notes';
+import { toast } from "@/lib/toast";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 interface NotesSectionProps {
   applicationId: string;
@@ -12,10 +21,14 @@ interface NotesSectionProps {
 export function NotesSection({ applicationId }: NotesSectionProps) {
   const [newNote, setNewNote] = useState('');
   const [isAdding, setIsAdding] = useState(false);
-  
+
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+
   const { data: notes = [], isLoading } = useNotes(applicationId);
   const createNote = useCreateNote(applicationId);
-  const addToast = useUIStore((state) => state.addToast);
+  const deleteNote = useDeleteNote(applicationId);
+  const updateNote = useUpdateNote(applicationId);
 
   const handleAddNote = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,13 +38,77 @@ export function NotesSection({ applicationId }: NotesSectionProps) {
       { content: newNote.trim() },
       {
         onSuccess: () => {
-          addToast('Note added successfully');
-          setNewNote('');
+          toast.success("Note Added", {
+            description: "Your note has been saved successfully.",
+            preset: "smooth",
+            showProgress: true,
+          });
+
+          setNewNote("");
           setIsAdding(false);
         },
         onError: () => {
-          addToast('Failed to add note', 'error');
-        }
+          toast.error("Failed to Add Note", {
+            description: "Please try again.",
+            preset: "smooth",
+          });
+        },
+      }
+    );
+  };
+
+  const handleDeleteNote = (noteId: string) => {
+    if (!confirm("Delete this note?")) return;
+
+    deleteNote.mutate(noteId, {
+      onSuccess: () => {
+        toast.success("Note Deleted", {
+          description: "The note has been removed.",
+          preset: "smooth",
+          showProgress: true,
+        });
+      },
+      onError: () => {
+        toast.error("Delete Failed", {
+          description: "Failed to delete the note.",
+          preset: "smooth",
+        });
+      },
+    });
+  };
+
+  const handleEditNote = (note: typeof notes[number]) => {
+    setEditingNoteId(note.id);
+    setEditingContent(note.content);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingNoteId || !editingContent.trim()) return;
+
+    updateNote.mutate(
+      {
+        noteId: editingNoteId,
+        data: {
+          content: editingContent.trim(),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Note Updated", {
+            description: "Your changes have been saved.",
+            preset: "smooth",
+            showProgress: true,
+          });
+
+          setEditingNoteId(null);
+          setEditingContent("");
+        },
+        onError: () => {
+          toast.error("Update Failed", {
+            description: "Failed to update the note.",
+            preset: "smooth",
+          });
+        },
       }
     );
   };
@@ -94,9 +171,74 @@ export function NotesSection({ applicationId }: NotesSectionProps) {
           {notes.map((note) => (
             <div
               key={note.id}
-              className="p-3 rounded-xl bg-white/5 border border-white/5 text-xs text-gray-300 leading-relaxed group relative hover:border-white/10 transition-colors"
+              className="group relative rounded-xl border border-white/5 bg-white/5 p-3 hover:border-white/10 transition-all"
             >
-              {note.content}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <DropdownMenu.Root>
+                  <DropdownMenu.Trigger asChild>
+                    <button className="p-1 rounded-md hover:bg-white/10">
+                      <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </DropdownMenu.Trigger>
+
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      sideOffset={6}
+                      className="z-50 min-w-[160px] rounded-lg border border-white/10 bg-[#1b1e2a] p-1 shadow-xl"
+                    >
+                      <DropdownMenu.Item
+                        onClick={() => handleEditNote(note)}
+                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-200 outline-none hover:bg-white/10 cursor-pointer"
+                      >
+                        <Pencil className="w-4 h-4" />
+                        Edit
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        onClick={() => handleDeleteNote(note.id)}
+                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-red-400 outline-none hover:bg-red-500/10 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Delete
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              </div>
+
+              {editingNoteId === note.id ? (
+                <div className="space-y-2 pr-8">
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border border-white/10 bg-black/20 p-2 text-xs text-gray-100 focus:border-violet-500 focus:outline-none"
+                  />
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingNoteId(null);
+                        setEditingContent("");
+                      }}
+                      className="px-3 py-1 text-xs text-gray-400 hover:text-white"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      onClick={handleSaveEdit}
+                      className="rounded-lg bg-violet-600 px-3 py-1 text-xs text-white hover:bg-violet-500"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="pr-8 text-xs leading-relaxed text-gray-300">
+                  {note.content}
+                </p>
+              )}
             </div>
           ))}
         </div>

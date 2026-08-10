@@ -2,7 +2,7 @@
 
 import { Search, Filter, X, ArrowUpDown } from 'lucide-react';
 import { useUIStore } from '@/stores/useUIStore';
-import { KANBAN_COLUMNS, SOURCE_CONFIG, METHOD_CONFIG } from '@/lib/constants';
+import { KANBAN_COLUMNS, SOURCE_CONFIG, METHOD_CONFIG, STATUS_CONFIG } from '@/lib/constants';
 import { ApplicationStatus, ApplicationSource, ApplicationMethod, SortField, SortDirection } from '@/lib/types';
 
 export function FilterBar() {
@@ -98,17 +98,18 @@ export function FilterBar() {
         <span className="text-xs text-gray-500 font-mono mr-1">STATUS:</span>
         {KANBAN_COLUMNS.map((status) => {
           const isSelected = filters.status.includes(status);
+          const config = STATUS_CONFIG[status];
           return (
             <button
               key={status}
               onClick={() => toggleStatus(status)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium capitalize transition-all border ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-all border ${
                 isSelected
                   ? 'bg-violet-600/30 border-violet-500/50 text-violet-200 shadow-sm'
                   : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-200 hover:bg-white/10'
               }`}
             >
-              {status}
+              {config?.label || status}
             </button>
           );
         })}

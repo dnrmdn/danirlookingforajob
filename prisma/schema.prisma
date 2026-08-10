@@ -32,7 +32,7 @@ model Application {
   description String?
   url         String?
   
-  status      ApplicationStatus @default(BOOKMARKED)
+  status      ApplicationStatus @default(APPLIED)
   source      ApplicationSource @default(OTHER)
   method      ApplicationMethod @default(OTHER)
   
@@ -107,13 +107,13 @@ model ActivityLog {
 }
 
 enum ApplicationStatus {
-  BOOKMARKED
-  APPLYING
   APPLIED
+  SCREENING
   INTERVIEW
-  OFFER
+  TEST
+  OFFERING
+  ACCEPTED
   REJECTED
-  GHOSTED
 }
 
 enum ApplicationSource {

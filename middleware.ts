@@ -8,6 +8,7 @@ import { authConfig } from "@/lib/auth.config"
 export default NextAuth(authConfig).auth
 
 export const config = {
-  // Matches all routes except api, _next/static, _next/image, favicon, login, and register
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login|register).*)"],
-}
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+  ],
+};

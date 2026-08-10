@@ -7,19 +7,23 @@ import { FileUploader } from '@/components/shared/FileUploader';
 import { useUIStore } from '@/stores/useUIStore';
 import { ApplicationSource, ApplicationMethod } from '@/lib/types';
 import { SOURCE_CONFIG, METHOD_CONFIG } from '@/lib/constants';
+import { toast } from "@/lib/toast";
 import { todayISO } from '@/lib/utils';
 import { useApplication, useCreateApplication, useUpdateApplication } from '@/lib/api-client/applications';
 import { useCreateNote } from '@/lib/api-client/notes';
 import { useUploadAttachment } from '@/lib/api-client/attachments';
 import { useCreateReminder } from '@/lib/api-client/reminders';
-import { CreateApplicationRequest } from '@/features/applications/dto';
+import {
+  CreateApplicationRequest,
+  UpdateApplicationRequest,
+} from "@/features/applications/dto";
 
 export function ApplicationForm() {
-  const { isFormModalOpen, setFormModalOpen, editingApplicationId, setEditingApplicationId, addToast } = useUIStore();
-  
+  const { isFormModalOpen, setFormModalOpen, editingApplicationId, setEditingApplicationId } = useUIStore();
+
   const { data: editingApp, isFetching } = useApplication(editingApplicationId || '');
   const createApplication = useCreateApplication();
-  const updateApplication = useUpdateApplication(editingApplicationId || '');
+  const updateApplication = useUpdateApplication();
   const createNote = useCreateNote(''); // ID provided at mutate
   const uploadAttachment = useUploadAttachment(''); // ID provided at mutate
   const createReminder = useCreateReminder(''); // ID provided at mutate
@@ -77,41 +81,67 @@ export function ApplicationForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.company || !formData.position || !formData.appliedAt) {
-      addToast('Please fill all required fields', 'error');
+      toast.error("Validation Failed", {
+        description: "Company, Position, and Applied Date are required.",
+        preset: "smooth",
+      });
       return;
     }
 
     if (editingApplicationId) {
-      updateApplication.mutate(formData as any, {
-        onSuccess: () => {
-          addToast('Application updated successfully');
-          setFormModalOpen(false);
-          setEditingApplicationId(null);
+      updateApplication.mutate(
+        {
+          id: editingApplicationId,
+          data: formData as UpdateApplicationRequest,
         },
-        onError: () => addToast('Failed to update', 'error')
-      });
+        {
+          onSuccess: () => {
+            toast.success("Application Updated", {
+              description: "The application has been updated successfully.",
+              preset: "smooth",
+              showProgress: true,
+            });
+
+            setFormModalOpen(false);
+            setEditingApplicationId(null);
+          },
+          onError: () => {
+            toast.error("Update Failed", {
+              description: "Failed to update the application. Please try again.",
+              preset: "smooth",
+            });
+          },
+        }
+      );
     } else {
       createApplication.mutate(formData as CreateApplicationRequest, {
         onSuccess: (newApp) => {
-          addToast('Application added successfully');
-          
+          toast.success("Application Created", {
+            description: "The application has been saved successfully.",
+            preset: "smooth",
+            showProgress: true,
+          });
+
           // Fire off supplementary creations (notes, attachments, reminders)
           if (noteText.trim()) {
-            const createNoteWithId = useCreateNote(newApp.id); // Hacky hook rule break, need a cleaner way
-            // Actually, we can't call hooks in callbacks. We can just use fetch or restructure the hook.
-            // For now, I'll update the API client to support passing appId on mutate if not provided in hook.
+            // TODO:
+            // Hook tidak boleh dipanggil di dalam callback.
+            // Nanti kita refactor create note agar menggunakan mutation
+            // yang menerima applicationId saat mutate().
           }
-          
-          // Note: Full implementation of chaining creations would require either 
-          // passing the ID in mutate, or redirecting to the detail view where they can add them.
-          // Since the UI had them inline, we'll implement a chained save in Phase 10 if needed.
-          
+
           setFormModalOpen(false);
           setEditingApplicationId(null);
         },
-        onError: () => addToast('Failed to create application', 'error')
+
+        onError: () => {
+          toast.error("Create Failed", {
+            description: "Failed to create the application. Please try again.",
+            preset: "smooth",
+          });
+        },
       });
     }
   };
@@ -134,11 +164,11 @@ export function ApplicationForm() {
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Company Name *</label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 required
                 value={formData.company}
-                onChange={(e) => setFormData({...formData, company: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 placeholder="e.g. Acme Corp"
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all placeholder:text-gray-600"
               />
@@ -148,11 +178,11 @@ export function ApplicationForm() {
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Position *</label>
             <div className="relative">
               <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 required
                 value={formData.position}
-                onChange={(e) => setFormData({...formData, position: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                 placeholder="e.g. Senior Frontend Engineer"
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all placeholder:text-gray-600"
               />
@@ -164,9 +194,9 @@ export function ApplicationForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Source</label>
-            <select 
+            <select
               value={formData.source}
-              onChange={(e) => setFormData({...formData, source: e.target.value as any})}
+              onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all appearance-none cursor-pointer"
             >
               <option value="LINKEDIN" className="bg-gray-800 text-white">LinkedIn</option>
@@ -181,10 +211,10 @@ export function ApplicationForm() {
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Job Listing URL</label>
             <div className="relative">
               <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input 
-                type="url" 
+              <input
+                type="url"
                 value={formData.url || ''}
-                onChange={(e) => setFormData({...formData, url: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                 placeholder="https://..."
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all placeholder:text-gray-600"
               />
@@ -196,9 +226,9 @@ export function ApplicationForm() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Method</label>
-            <select 
+            <select
               value={formData.method}
-              onChange={(e) => setFormData({...formData, method: e.target.value as any})}
+              onChange={(e) => setFormData({ ...formData, method: e.target.value as any })}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all appearance-none cursor-pointer"
             >
               <option value="EASY_APPLY" className="bg-gray-800 text-white">Easy Apply</option>
@@ -212,11 +242,11 @@ export function ApplicationForm() {
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Date Applied *</label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input 
-                type="date" 
+              <input
+                type="date"
                 required
                 value={formData.appliedAt || ''}
-                onChange={(e) => setFormData({...formData, appliedAt: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, appliedAt: e.target.value })}
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all [color-scheme:dark]"
               />
             </div>
@@ -229,10 +259,10 @@ export function ApplicationForm() {
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Location</label>
             <div className="relative">
               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={formData.location}
-                onChange={(e) => setFormData({...formData, location: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Jakarta, Remote, Hybrid"
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all placeholder:text-gray-600"
               />
@@ -242,10 +272,10 @@ export function ApplicationForm() {
             <label className="text-xs font-mono text-gray-400 uppercase tracking-wider">Expected Salary</label>
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={formData.salary}
-                onChange={(e) => setFormData({...formData, salary: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                 placeholder="e.g. Rp 15.000.000 / mo"
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-gray-100 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 outline-none transition-all placeholder:text-gray-600"
               />

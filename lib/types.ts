@@ -2,15 +2,9 @@
 // CareerVault — Core Type Definitions
 // ============================================================
 
-export type ApplicationStatus =
-  | 'applied'
-  | 'screening'
-  | 'interview'
-  | 'test'
-  | 'offering'
-  | 'accepted'
-  | 'rejected'
-  | 'ghosted';
+import { ApplicationStatus as PrismaApplicationStatus } from '@prisma/client';
+
+export type ApplicationStatus = PrismaApplicationStatus;
 
 export type ApplicationSource =
   | 'linkedin'

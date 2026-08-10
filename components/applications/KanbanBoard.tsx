@@ -13,9 +13,10 @@ import {
   DragOverEvent,
   DragEndEvent,
 } from '@dnd-kit/core';
+import { ApplicationStatus } from "@/lib/types";
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
-import { useUIStore } from '@/stores/useUIStore';
-import { KANBAN_COLUMNS } from '@/lib/constants';
+import { toast } from "@/lib/toast";
+import { KANBAN_COLUMNS, STATUS_CONFIG } from '@/lib/constants';
 import { KanbanColumn } from './KanbanColumn';
 import { ApplicationCard } from './ApplicationCard';
 import { ApplicationSummaryResponse } from '@/features/applications/dto';
@@ -26,9 +27,8 @@ interface KanbanBoardProps {
 }
 
 export function KanbanBoard({ applications }: KanbanBoardProps) {
-  const addToast = useUIStore((state) => state.addToast);
-  const updateApplication = useUpdateApplication(''); // Will override id on mutate
-  
+  const updateApplication = useUpdateApplication();
+
   const [activeId, setActiveId] = useState<string | null>(null);
 
   // Group applications by status
@@ -66,7 +66,7 @@ export function KanbanBoard({ applications }: KanbanBoardProps) {
     }
 
     const activeAppId = active.id as string;
-    
+
     // Find the source app
     const activeApp = applications.find(app => app.id === activeAppId);
     if (!activeApp) {
@@ -76,7 +76,7 @@ export function KanbanBoard({ applications }: KanbanBoardProps) {
 
     // Determine the target status
     let newStatus: string;
-    
+
     // If over a column (id is the status string)
     if (KANBAN_COLUMNS.includes(over.id as any)) {
       newStatus = over.id as string;
@@ -92,19 +92,28 @@ export function KanbanBoard({ applications }: KanbanBoardProps) {
     }
 
     if (activeApp.status !== newStatus) {
-      // Optimistic UI handled by React Query conceptually, or just wait for success.
-      // Since it's a drag and drop, we could implement full optimistic update in the hook,
-      // but for now we just trigger the mutation.
+      const statusLabel = STATUS_CONFIG[newStatus as keyof typeof STATUS_CONFIG]?.label || newStatus;
       updateApplication.mutate(
-        // @ts-ignore - dynamic id override
-        { id: activeAppId, data: { status: newStatus as any } },
+        {
+          id: activeAppId,
+          data: {
+            status: newStatus as ApplicationStatus,
+          },
+        },
         {
           onSuccess: () => {
-            addToast(`Status updated to ${newStatus.charAt(0).toUpperCase() + newStatus.slice(1)}`);
+            toast.success("Status Updated", {
+              description: `Application moved to ${statusLabel}.`,
+              preset: "smooth",
+              showProgress: true,
+            });
           },
           onError: () => {
-            addToast(`Failed to update status`, 'error');
-          }
+            toast.error("Update Failed", {
+              description: "Failed to update application status.",
+              preset: "smooth",
+            });
+          },
         }
       );
     }
@@ -122,7 +131,7 @@ export function KanbanBoard({ applications }: KanbanBoardProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-6 overflow-x-auto pb-8 flex-grow kanban-scroll snap-x snap-mandatory pt-2 min-h-[calc(100vh-200px)]">
+      <div className="flex gap-4 overflow-x-auto pb-8 flex-grow kanban-scroll snap-x snap-mandatory pt-2 min-h-[calc(100vh-200px)]">
         {KANBAN_COLUMNS.map((status) => (
           <KanbanColumn
             key={status}
@@ -135,9 +144,9 @@ export function KanbanBoard({ applications }: KanbanBoardProps) {
       <DragOverlay>
         {activeApplication ? (
           <div className="rotate-3 opacity-90 shadow-2xl scale-105 cursor-grabbing">
-            <ApplicationCard 
-              application={activeApplication} 
-              onClick={() => {}} 
+            <ApplicationCard
+              application={activeApplication}
+              onClick={() => { }}
             />
           </div>
         ) : null}

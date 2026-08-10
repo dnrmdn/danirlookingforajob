@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -39,6 +40,7 @@ export default function RootLayout({
         <AuthProvider>
           <QueryProvider>
             {children}
+            <ToastProvider />
           </QueryProvider>
         </AuthProvider>
       </body>

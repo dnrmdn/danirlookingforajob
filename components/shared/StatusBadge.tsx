@@ -9,8 +9,8 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, className, showDot = true }: StatusBadgeProps) {
-  const normalizedStatus = (status?.toLowerCase() || 'applied') as ApplicationStatus;
-  const config = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.applied;
+  const normalizedStatus = (status?.toUpperCase() || 'APPLIED') as ApplicationStatus;
+  const config = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.APPLIED;
   
   if (!config) return null;
 

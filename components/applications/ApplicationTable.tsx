@@ -45,7 +45,7 @@ export function ApplicationTable({ applications }: ApplicationTableProps) {
               </td>
               <td className="px-6 py-4 whitespace-nowrap">{app.position}</td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <StatusBadge status={app.status.toLowerCase() as any} />
+                <StatusBadge status={app.status} />
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
                 <span className="bg-white/10 text-gray-300 border border-white/10 font-mono px-2 py-1 rounded-md uppercase text-[10px]">

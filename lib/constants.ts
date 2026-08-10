@@ -9,7 +9,7 @@ export const STATUS_CONFIG: Record<
   ApplicationStatus,
   { label: string; color: string; bgClass: string; textClass: string; borderClass: string; dotColor: string }
 > = {
-  applied: {
+  APPLIED: {
     label: 'Applied',
     color: '#6366F1',
     bgClass: 'bg-indigo-500/15',
@@ -17,7 +17,7 @@ export const STATUS_CONFIG: Record<
     borderClass: 'border-indigo-500/30',
     dotColor: 'bg-indigo-400',
   },
-  screening: {
+  SCREENING: {
     label: 'Screening',
     color: '#8B5CF6',
     bgClass: 'bg-violet-500/15',
@@ -25,7 +25,7 @@ export const STATUS_CONFIG: Record<
     borderClass: 'border-violet-500/30',
     dotColor: 'bg-violet-400',
   },
-  interview: {
+  INTERVIEW: {
     label: 'Interview',
     color: '#EC4899',
     bgClass: 'bg-pink-500/15',
@@ -33,7 +33,7 @@ export const STATUS_CONFIG: Record<
     borderClass: 'border-pink-500/30',
     dotColor: 'bg-pink-400',
   },
-  test: {
+  TEST: {
     label: 'Test',
     color: '#F59E0B',
     bgClass: 'bg-amber-500/15',
@@ -41,7 +41,7 @@ export const STATUS_CONFIG: Record<
     borderClass: 'border-amber-500/30',
     dotColor: 'bg-amber-400',
   },
-  offering: {
+  OFFERING: {
     label: 'Offering',
     color: '#10B981',
     bgClass: 'bg-emerald-500/15',
@@ -49,7 +49,7 @@ export const STATUS_CONFIG: Record<
     borderClass: 'border-emerald-500/30',
     dotColor: 'bg-emerald-400',
   },
-  accepted: {
+  ACCEPTED: {
     label: 'Accepted',
     color: '#22C55E',
     bgClass: 'bg-green-500/15',
@@ -57,7 +57,7 @@ export const STATUS_CONFIG: Record<
     borderClass: 'border-green-500/30',
     dotColor: 'bg-green-400',
   },
-  rejected: {
+  REJECTED: {
     label: 'Rejected',
     color: '#EF4444',
     bgClass: 'bg-red-500/15',
@@ -65,25 +65,30 @@ export const STATUS_CONFIG: Record<
     borderClass: 'border-red-500/30',
     dotColor: 'bg-red-400',
   },
-  ghosted: {
-    label: 'Ghosted',
-    color: '#6B7280',
-    bgClass: 'bg-gray-500/15',
-    textClass: 'text-gray-400',
-    borderClass: 'border-gray-500/30',
-    dotColor: 'bg-gray-400',
-  },
 };
 
 // Kanban column order
 export const KANBAN_COLUMNS: ApplicationStatus[] = [
-  'applied',
-  'screening',
-  'interview',
-  'test',
-  'offering',
-  'accepted',
-  'rejected',
+  'APPLIED',
+  'SCREENING',
+  'INTERVIEW',
+  'TEST',
+  'OFFERING',
+  'ACCEPTED',
+  'REJECTED',
+];
+
+export const ACTIVE_APPLICATION_STATUS: ApplicationStatus[] = [
+  "APPLIED",
+  "SCREENING",
+  "INTERVIEW",
+  "TEST",
+  "OFFERING",
+];
+
+export const TERMINAL_APPLICATION_STATUS: ApplicationStatus[] = [
+  "ACCEPTED",
+  "REJECTED",
 ];
 
 // ---- Source Configuration ----

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Bell, Calendar, Check } from 'lucide-react';
 import { useAppReminders, useCreateReminder, useDeleteReminder } from '@/lib/api-client/reminders';
-import { useUIStore } from '@/stores/useUIStore';
+import { toast } from "@/lib/toast";
 
 interface ReminderSetterProps {
   applicationId: string;
@@ -15,13 +15,12 @@ export function ReminderSetter({ applicationId, company }: ReminderSetterProps) 
   const [days, setDays] = useState<number>(7);
   const [customDate, setCustomDate] = useState<string>('');
   const [message, setMessage] = useState<string>(`Follow up email to ${company}`);
-  
+
   const { data: reminders = [], isLoading } = useAppReminders(applicationId);
   const createReminder = useCreateReminder(applicationId);
   const deleteReminder = useDeleteReminder(applicationId);
-  
+
   const existingReminder = reminders[0];
-  const addToast = useUIStore((state) => state.addToast);
 
   const handleSave = () => {
     let targetDate: string;
@@ -34,15 +33,26 @@ export function ReminderSetter({ applicationId, company }: ReminderSetterProps) 
     }
 
     createReminder.mutate(
-      { title: message || `Follow up with ${company}`, reminderDate: targetDate },
+      {
+        title: message || `Follow up with ${company}`,
+        reminderDate: targetDate,
+      },
       {
         onSuccess: () => {
-          addToast('Reminder set successfully!');
+          toast.success("Reminder Created", {
+            description: "Your follow-up reminder has been scheduled.",
+            preset: "smooth",
+            showProgress: true,
+          });
+
           setIsEditing(false);
         },
         onError: () => {
-          addToast('Failed to set reminder', 'error');
-        }
+          toast.error("Failed to Create Reminder", {
+            description: "Please try again.",
+            preset: "smooth",
+          });
+        },
       }
     );
   };
@@ -51,12 +61,20 @@ export function ReminderSetter({ applicationId, company }: ReminderSetterProps) 
     if (!existingReminder) return;
     deleteReminder.mutate(existingReminder.id, {
       onSuccess: () => {
-        addToast('Reminder removed');
+        toast.success("Reminder Removed", {
+          description: "The reminder has been deleted.",
+          preset: "smooth",
+          showProgress: true,
+        });
+
         setIsEditing(false);
       },
       onError: () => {
-        addToast('Failed to remove reminder', 'error');
-      }
+        toast.error("Delete Failed", {
+          description: "Failed to remove the reminder.",
+          preset: "smooth",
+        });
+      },
     });
   };
 
@@ -114,11 +132,10 @@ export function ReminderSetter({ applicationId, company }: ReminderSetterProps) 
                     setDays(d);
                     setCustomDate('');
                   }}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                    days === d && !customDate
-                      ? 'bg-violet-600/30 border-violet-500 text-violet-200'
-                      : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-200'
-                  }`}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${days === d && !customDate
+                    ? 'bg-violet-600/30 border-violet-500 text-violet-200'
+                    : 'bg-white/5 border-white/5 text-gray-400 hover:text-gray-200'
+                    }`}
                 >
                   In {d} days
                 </button>

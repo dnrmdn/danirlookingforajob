@@ -26,13 +26,13 @@ export default function ApplicationsPage() {
           if (!matchCompany && !matchPosition) return false;
         }
 
-        // Status filter (normalize casing for comparison between DB enum and UI types)
-        if (filters.status.length > 0 && !filters.status.includes(app.status.toLowerCase() as any)) {
+        // Status filter
+        if (filters.status.length > 0 && !filters.status.includes(app.status as any)) {
           return false;
         }
 
-        // Source filter (normalize casing for comparison between DB enum and UI types)
-        if (filters.source.length > 0 && !filters.source.includes(app.source.toLowerCase() as any)) {
+        // Source filter
+        if (filters.source.length > 0 && !filters.source.includes(app.source as any)) {
           return false;
         }
 

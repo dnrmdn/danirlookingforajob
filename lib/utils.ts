@@ -58,7 +58,7 @@ export function isGhosted(app: Application): boolean {
   const daysSinceUpdate = getDaysSince(app.updatedAt);
   return (
     daysSinceUpdate >= GHOSTED_THRESHOLD_DAYS &&
-    !['accepted', 'rejected'].includes(app.status)
+    !['ACCEPTED', 'REJECTED'].includes(app.status)
   );
 }
 
@@ -70,8 +70,8 @@ export function getStatusCounts(
 ): Record<ApplicationStatus, number> {
   const counts: Record<string, number> = {};
   const allStatuses: ApplicationStatus[] = [
-    'applied', 'screening', 'interview', 'test',
-    'offering', 'accepted', 'rejected', 'ghosted',
+    'APPLIED', 'SCREENING', 'INTERVIEW', 'TEST',
+    'OFFERING', 'ACCEPTED', 'REJECTED', 'GHOSTED',
   ];
   allStatuses.forEach((s) => (counts[s] = 0));
   applications.forEach((app) => {
@@ -85,7 +85,7 @@ export function getStatusCounts(
  */
 export function getActiveApplications(applications: Application[]): Application[] {
   return applications.filter(
-    (app) => !['accepted', 'rejected'].includes(app.status)
+    (app) => !['ACCEPTED', 'REJECTED'].includes(app.status)
   );
 }
 
@@ -108,7 +108,7 @@ export function formatNumber(num: number): string {
  */
 export function calculateResponseRate(applications: Application[]): number {
   if (applications.length === 0) return 0;
-  const responded = applications.filter((app) => app.status !== 'applied').length;
+  const responded = applications.filter((app) => app.status !== 'APPLIED').length;
   return Math.round((responded / applications.length) * 100);
 }
 
@@ -118,7 +118,7 @@ export function calculateResponseRate(applications: Application[]): number {
 export function calculateInterviewRate(applications: Application[]): number {
   if (applications.length === 0) return 0;
   const interviewed = applications.filter((app) =>
-    ['interview', 'test', 'offering', 'accepted'].includes(app.status)
+    ['INTERVIEW', 'TEST', 'OFFERING', 'ACCEPTED'].includes(app.status)
   ).length;
   return Math.round((interviewed / applications.length) * 100);
 }
